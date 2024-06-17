@@ -7,3 +7,6 @@ outperforming LLMs baselines by an increase of 35.05% in F1 score. We further ev
 
 # The Diversity and Deviation of Expert tools
 ![Image text](https://github.com/CEDAR2024/CEDAR/blob/4c1521cf933d8b94f6d3a2aaa95f7aafa9fe3fd0/figure/code.png)
+Here, we present examples of detection outcomes from multiple tools applied to the same code snippet. In the first code fragment featuring the `processRegionsInTransition` method, the frequent data access and method invocations involving `HRegionInfo` and `RegionState` classes highlight a potential case of "Feature Envy". To alleviate this smell, a sound strategy would involve migrating this method to a class where it logically fits better, or revising the class structure and method design to enhance data encapsulation and clarify responsibilities.
+
+By contrast, in the second code snippet showcasing the `interpOneAxis` method, the primary interactions are with its input parameters such as `v`, `s`, `param`, `closed`, and `tol`, all of which are externally provided rather than being state attributes of its own class. This method does not exhibit a reliance on multiple method calls or attribute accesses to other objects, thereby indicating an absence of the "Feature Envy" characteristic.
