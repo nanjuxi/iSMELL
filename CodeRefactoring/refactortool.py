@@ -5,7 +5,7 @@ from javalang.tree import MethodDeclaration
 
 client = OpenAI(
     base_url="https://api.xty.app/v1",
-    api_key="sk-SIdpFf5nFU0PEzJ0Ec8a10A1969747D6Be9858F2B7F9A522",
+    api_key="xxxxx",
     http_client=httpx.Client(
         base_url="https://api.xty.app/v1",
         follow_redirects=True,
