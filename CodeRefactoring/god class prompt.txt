@@ -6,194 +6,19 @@ You do not need to keep the structure, improve the code's readability and mainta
 
 </example>
 
-Now based on the example, refactor the following code. You don't need to give the full code, just give the most modified part of it. You should not output extra content. Ignore the logic belonging, just divide those methods in original code into as many classes as possible
+Now based on the example, refactor the following code. You don't need to give the full code, just give the most modified part of it. You should not output extra content.
 ```java
 {{input}}
 ```
 
-here is a list of method in original code, note which class each method is belonging to in the refactored code:
-
 
 codesmell:
-Long Method / God Class / Feature Envy / Refused Bequest
+God Class / Feature Envy / Refused Bequest
 
 definition:
-Long Method is a method contains too many lines of codes, making it difficult to understand and maintain. Typically, a line of code ends with ';'. Declarations of method and class, "for-loop", "while-loop", "if-statement", "else-statement", "switch-statement", "case-statement", "try-statement", "catch-statement" must also be treated as a separate line.
 God Class is a large and unwieldy class that takes on too many responsibilities within an application. It concentrates a multitude of functions, oversees numerous objects, and effectively tries to do everything. 
 Feature Envy occurs when a method in one class can't seem to keep its eyes off the data of another class. This sneaky behavior hints that there might be a better home for the method, where it fits in more naturally and keeps the codebase cleaner and easier to manage.
 Refused Bequest occurs if a subclass uses only some of the methods and properties inherited from its parents. This is an indication that the class should not be a subclass of that parent class, since child classes should be adding or modifying functionality.
-
-long method example:
-<example>
-origin code:
-```java
-private static boolean match(String pattern, String str) {
-        char[] patArr = pattern.toCharArray();
-        char[] strArr = str.toCharArray();
-        int patIdxStart = 0;
-        int patIdxEnd   = patArr.length-1;
-        int strIdxStart = 0;
-        int strIdxEnd   = strArr.length-1;
-        char ch;
-
-        boolean containsStar = false;
-        for (int i = 0; i < patArr.length; i++) {
-            if (patArr[i] == '*') {
-                containsStar = true;
-                break;
-            }
-        }
-
-        if (!containsStar) {
-            // No '*'s, so we make a shortcut
-            if (patIdxEnd != strIdxEnd) {
-                return false; // Pattern and string do not have the same size
-            }
-            for (int i = 0; i <= patIdxEnd; i++) {
-                ch = patArr[i];
-                if (ch != '?' && ch != strArr[i]) {
-                    return false; // Character mismatch
-                }
-            }
-            return true; // String matches against pattern
-        }
-
-        if (patIdxEnd == 0) {
-            return true; // Pattern contains only '*', which matches anything
-        }
-
-        // Process characters before first star
-        while((ch = patArr[patIdxStart]) != '*' && strIdxStart <= strIdxEnd) {
-            if (ch != '?' && ch != strArr[strIdxStart]) {
-                return false;
-            }
-            patIdxStart++;
-            strIdxStart++;
-        }
-        if (strIdxStart > strIdxEnd) {
-            // All characters in the string are used. Check if only '*'s are
-            // left in the pattern. If so, we succeeded. Otherwise failure.
-            for (int i = patIdxStart; i <= patIdxEnd; i++) {
-                if (patArr[i] != '*') {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // Process characters after last star
-        while((ch = patArr[patIdxEnd]) != '*' && strIdxStart <= strIdxEnd) {
-            if (ch != '?' && ch != strArr[strIdxEnd]) {
-                return false;
-            }
-            patIdxEnd--;
-            strIdxEnd--;
-        }
-        if (strIdxStart > strIdxEnd) {
-            // All characters in the string are used. Check if only '*'s are
-            // left in the pattern. If so, we succeeded. Otherwise failure.
-            for (int i = patIdxStart; i <= patIdxEnd; i++) {
-                if (patArr[i] != '*') {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // process pattern between stars. padIdxStart and patIdxEnd point
-        // always to a '*'.
-        while (patIdxStart != patIdxEnd && strIdxStart <= strIdxEnd) {
-            int patIdxTmp = -1;
-            for (int i = patIdxStart+1; i <= patIdxEnd; i++) {
-                if (patArr[i] == '*') {
-                    patIdxTmp = i;
-                    break;
-                }
-            }
-            if (patIdxTmp == patIdxStart+1) {
-                // Two stars next to each other, skip the first one.
-                patIdxStart++;
-                continue;
-            }
-            // Find the pattern between padIdxStart & padIdxTmp in str between
-            // strIdxStart & strIdxEnd
-            int patLength = (patIdxTmp-patIdxStart-1);
-            int strLength = (strIdxEnd-strIdxStart+1);
-            int foundIdx  = -1;
-strLoop:
-            for (int i = 0; i <= strLength - patLength; i++) {
-                for (int j = 0; j < patLength; j++) {
-                    ch = patArr[patIdxStart+j+1];
-                    if (ch != '?' && ch != strArr[strIdxStart+i+j]) {
-                        continue strLoop;
-                    }
-                }
-
-                foundIdx = strIdxStart+i;
-                break;
-            }
-
-            if (foundIdx == -1) {
-                return false;
-            }
-
-            patIdxStart = patIdxTmp;
-            strIdxStart = foundIdx+patLength;
-        }
-
-        // All characters in the string are used. Check if only '*'s are left
-        // in the pattern. If so, we succeeded. Otherwise failure.
-        for (int i = patIdxStart; i <= patIdxEnd; i++) {
-            if (patArr[i] != '*') {
-                return false;
-            }
-        }
-        return true;
-    }
-```
-refactored code:
-```java
-private static boolean match(String pattern, String str) {
-    char[] patArr = pattern.toCharArray();
-    char[] strArr = str.toCharArray();
-
-    if (!containsStar(patArr)) {
-        return matchWithoutStar(patArr, strArr);
-    }
-
-    return matchWithStar(patArr, strArr);
-}
-
-private static boolean containsStar(char[] patArr) {
-    for (char c : patArr) {
-        if (c == '*') {
-            return true;
-        }
-    }
-    return false;
-}
-
-private static boolean matchWithoutStar(char[] patArr, char[] strArr) {
-    if (patArr.length != strArr.length) {
-        return false;
-    }
-
-    for (int i = 0; i < patArr.length; i++) {
-        if (patArr[i] != '?' && patArr[i] != strArr[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-private static boolean matchWithStar(char[] patArr, char[] strArr) {
-    // Code that processes characters before first star,
-    // characters after last star, and pattern between stars.
-    // This part of the code has been left out because it's complex and would need more context to refactor correctly.
-}
-```
-</example>
-
 
 god class example:
 <example>
@@ -429,7 +254,7 @@ public class RegionStateManager {
         this.deadServers = deadServers;
         this.serverManager = serverManager;
     }
-    
+
     public void processRegionState(HRegionInfo regionInfo, RegionTransitionData data, int expectedVersion) {
         String encodedRegionName = regionInfo.getEncodedName();
         RegionState regionState = regionsInTransition.get(encodedRegionName);
@@ -469,7 +294,7 @@ public class RegionStateManager {
     }
 
     // Additional methods to handle other cases (handleRegionClosed, handleRegionOffline, etc.)
-    
+
     private boolean isOnDeadServer(HRegionInfo regionInfo) {
         // Check if region is on a dead server
     }
@@ -504,461 +329,357 @@ refused bequest:
 <example>
 original code:
 ```java
-public final class Configuration {
+public class SelectionNode extends SelectionNodeClarifiers {
+    /**
+     * Logger.
+     */
+    private static final Logger LOG =
+        Logger.getLogger(SelectionNode.class);
+    ////////////////////////////////////////////////////////////////
+    // constants
+    private static Icon dep =
+	ResourceLoaderWrapper.lookupIconResource("Association");
+
+
 
     ////////////////////////////////////////////////////////////////
-    // Instance variables
+    // constructors
 
     /**
-     * Property to indicate configuration load from file.
+     * Construct a new SelectionNode for the given Fig.
+     *
+     * @param f The given Fig.
      */
-    public static final String FILE_LOADED = "configuration.load.file";
+    public SelectionNode(Fig f) { super(f); }
 
     /**
-     * Property to indicate configuration load from url.
+     * @see org.tigris.gef.base.Selection#hitHandle(java.awt.Rectangle,
+     * org.tigris.gef.presentation.Handle)
      */
-    public static final String URL_LOADED = "configuration.load.url";
+    public void hitHandle(Rectangle r, Handle h) {
+	super.hitHandle(r, h);
+	if (h.index != -1) {
+	    return;
+	}
+	if (!isPaintButtons()) {
+	    return;
+	}
+	Editor ce = Globals.curEditor();
+	SelectionManager sm = ce.getSelectionManager();
+	if (sm.size() != 1) {
+	    return;
+	}
+	ModeManager mm = ce.getModeManager();
+	if (mm.includes(ModeModify.class) && getPressedButton() == -1) {
+	    return;
+	}
+	int cx = getContent().getX();
+	int cy = getContent().getY();
+	int cw = getContent().getWidth();
+	int ch = getContent().getHeight();
+	int aw = dep.getIconWidth();
+	int ah = dep.getIconHeight();
+	if (hitAbove(cx + cw / 2, cy, aw, ah, r)) {
+	    h.index = 10;
+	    h.instructions = "Add a node";
+	} else if (hitBelow(cx + cw / 2, cy + ch, aw, ah, r)) {
+	    h.index = 11;
+	    h.instructions = "Add a node";
+	} else if (hitLeft(cx + cw, cy + ch / 2, aw, ah, r)) {
+	    h.index = 12;
+	    h.instructions = "Add a node";
+	} else if (hitRight(cx, cy + ch / 2, aw, ah, r)) {
+	    h.index = 13;
+	    h.instructions = "Add a node";
+	} else {
+	    h.index = -1;
+	    h.instructions = "Move object(s)";
+	}
+    }
+
 
     /**
-     * Property to indicate configuration save to file.
+     * @see org.tigris.gef.base.SelectionButtons#paintButtons(Graphics)
      */
-    public static final String FILE_SAVED = "configuration.save.file";
+    public void paintButtons(Graphics g) {
+	int cx = getContent().getX();
+	int cy = getContent().getY();
+	int cw = getContent().getWidth();
+	int ch = getContent().getHeight();
+	paintButtonAbove(dep, g, cx + cw / 2, cy, 10);
+	paintButtonBelow(dep, g, cx + cw / 2, cy + ch, 11);
+	paintButtonLeft(dep, g, cx + cw, cy + ch / 2, 12);
+	paintButtonRight(dep, g, cx, cy + ch / 2, 13);
+    }
+
 
     /**
-     * Property to indicate configuration save to url.
+     * @see org.tigris.gef.base.Selection#dragHandle(int, int, int, int,
+     * org.tigris.gef.presentation.Handle)
      */
-    public static final String URL_SAVED = "configuration.save.url";
+    public void dragHandle(int mX, int mY, int anX, int anY, Handle hand) {
+	if (hand.index < 10) {
+	    setPaintButtons(false);
+	    super.dragHandle(mX, mY, anX, anY, hand);
+	    return;
+	}
+	int cx = getContent().getX(), cy = getContent().getY();
+	int cw = getContent().getWidth(), ch = getContent().getHeight();
+	Object edgeType = null;
+	Object nodeType = Model.getMetaTypes().getNode();
+	int bx = mX, by = mY;
+	boolean reverse = false;
+	switch (hand.index) {
+	case 10: //add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    by = cy;
+	    bx = cx + cw / 2;
+	    break;
+	case 11: //add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    reverse = true;
+	    by = cy + ch;
+	    bx = cx + cw / 2;
+	    break;
+	case 12: //add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    by = cy + ch / 2;
+	    bx = cx + cw;
+	    break;
+	case 13: // add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    reverse = true;
+	    by = cy + ch / 2;
+	    bx = cx;
+	    break;
+	default:
+	    LOG.warn("invalid handle number");
+	    break;
+	}
+	if (edgeType != null && nodeType != null) {
+	    Editor ce = Globals.curEditor();
+	    ModeCreateEdgeAndNode m =
+	        new ModeCreateEdgeAndNode(ce, edgeType, false, this);
+	    m.setup((FigNode) getContent(), getContent().getOwner(),
+                    bx, by, reverse);
+	    ce.pushMode(m);
+	}
+
+    }
+
+
+
 
     /**
-     * The only occurance of the configuration handler.
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeAbove(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
      */
-    private static ConfigurationHandler config =
-	getFactory().getConfigurationHandler();
-
-    /**
-     * Private constructor so it cannot be instantiated.
-     */
-    private Configuration() {
+    protected Object createEdgeAbove(MutableGraphModel gm, Object newNode) {
+        return gm.connect(getContent().getOwner(), newNode,
+			  (Class) Model.getMetaTypes().getAssociation());
     }
 
     /**
-     * Returns the instance of the configuration singleton.
-     *
-     * @return the configuration handler
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeLeft(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
      */
-    public static ConfigurationHandler getConfigurationHandler() {
-	return config;
+    protected Object createEdgeLeft(MutableGraphModel gm, Object newNode) {
+        return gm.connect(newNode, getContent().getOwner(),
+			  (Class) Model.getMetaTypes().getAssociation());
     }
 
     /**
-     * Returns the configuration factory instance.<p>
-     *
-     * This is equivalent to ConfigurationFactory.getInstance() but
-     * using Configuration.getFactory() is shorter to type and
-     * allows us not to have to deal with ConfigurationFactory at
-     * all if we don't need to modify or configure it.
-     *
-     * @return the configuration factory
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeRight(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
      */
-    public static ConfigurationFactory getFactory() {
-	return ConfigurationFactory.getInstance();
+    protected Object createEdgeRight(MutableGraphModel gm, Object newNode) {
+        return gm.connect(getContent().getOwner(), newNode,
+			  (Class) Model.getMetaTypes().getAssociation());
     }
 
     /**
-     * Load the configuration from the default location.
-     *
-     * The configuration will be automatically loaded from the default
-     * location the first time a value is queried or modified, if it
-     * had not been previously loaded.  Only the first load request
-     * will be honored, so if the configuration is to be loaded from
-     * a non-default location, load(name) must be used prior to any
-     * other call.  The configuration can be loaded only one time.
-     *
-     * Implementations must ignore load requests once a load is
-     * already successful, and must return false for each of those
-     * ignored requests.
-     *
-     * @return true if the load is successful, otherwise false
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeUnder(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
      */
-    public static boolean load() {
-	return config.loadDefault();
+    protected Object createEdgeUnder(MutableGraphModel gm, Object newNode) {
+        return gm.connect(newNode, getContent().getOwner(),
+			  (Class) Model.getMetaTypes().getAssociation());
     }
 
     /**
-     * Load the configuration from a specified file.
-     *
-     * @param file the File to load
-     *
-     * @return true if the load is successful, otherwise false
+     * @see org.tigris.gef.base.SelectionButtons#getNewNode(int)
      */
-    public static boolean load(File file) {
-	return config.load(file);
+    protected Object getNewNode(int buttonCode) {
+        return Model.getCoreFactory().createNode();
     }
 
     /**
-     * Load the configuration from a specified url.
-     *
-     * @param url the URL to load
-     *
-     * @return true if the load is successful, otherwise false
+     * The UID.
      */
-    public static boolean load(URL url) {
-	return config.load(url);
-    }
-
-    /**
-     * Save the configuration to the default location.
-     *
-     * Implementations do not have to handle this method.
-     * If the method is not allowed or it fails, the implementation
-     * must return false.
-     *
-     * @return true if the save is successful, otherwise false
-     */
-    public static boolean save() {
-	return Configuration.save(false);
-    }
-
-    /**
-     * Save the configuration to the default location.
-     *
-     * Implementations do not have to handle this method.
-     * If the method is not allowed or it fails, the implementation
-     * must return false.
-     *
-     * @param force the file to save even if it would not normally
-     * be saved.
-     *
-     * @return true if the save is successful, otherwise false
-     */
-    public static boolean save(boolean force) {
-	return config.saveDefault(force);
-    }
-
-    /**
-     * Returns the string value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the string value of the parameter if it exists, otherwise
-     * a zero length string
-     */
-    public static String getString(ConfigurationKey key) {
-	return getString(key, "");
-    }
-
-    /**
-     * Returns the string value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue the value to return if the key does not exist
-     *
-     * @return the string value of the parameter if it exists, otherwise the
-     *   default value
-     */
-    public static String getString(ConfigurationKey key,
-                                   String defaultValue) {
-	return config.getString(key, defaultValue);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the string value of the parameter if it exists, otherwise zero
-     */
-    public static int getInteger(ConfigurationKey key) {
-	return getInteger(key, 0);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue if the key is not found
-     *
-     * @return the string value of the parameter if it exists,
-     *         otherwise the default value
-     */
-    public static double getDouble(ConfigurationKey key,
-                                   double defaultValue) {
-	return config.getDouble(key, defaultValue);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the string value of the parameter if it exists, otherwise zero
-     */
-    public static double getDouble(ConfigurationKey key) {
-	return getDouble(key, 0);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue the value to return if the key does not exist
-     *
-     * @return the numeric value of the parameter if it exists, otherwise
-     *  the default value
-     */
-    public static int getInteger(ConfigurationKey key, int defaultValue) {
-	return config.getInteger(key, defaultValue);
-    }
-
-    /**
-     * Returns the boolean value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the boolean value of the parameter if it exists, otherwise false
-     */
-    public static boolean getBoolean(ConfigurationKey key) {
-	return getBoolean(key, false);
-    }
-
-    /**
-     * Returns the boolean value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue the value to return if the key does not exist
-     *
-     * @return the boolean value of the parameter if it exists, otherwise
-     *  the default value
-     */
-    public static boolean getBoolean(ConfigurationKey key,
-                                     boolean defaultValue) {
-	return config.getBoolean(key, defaultValue);
-    }
-
-    /**
-     * Sets the string value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setString(ConfigurationKey key, String newValue) {
-	config.setString(key, newValue);
-    }
-
-    /**
-     * Sets the numeric value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setInteger(ConfigurationKey key, int newValue) {
-	config.setInteger(key, newValue);
-    }
-
-    /**
-     * Sets the numeric value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setDouble(ConfigurationKey key, double newValue) {
-	config.setDouble(key, newValue);
-    }
-
-    /**
-     * Sets the boolean value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setBoolean(ConfigurationKey key,
-                                  boolean newValue) {
-	config.setBoolean(key, newValue);
-    }
-
-    /**
-     * Adds a property change listener.
-     *
-     * @param pcl The property change listener to add
-     */
-    public static void addListener(PropertyChangeListener pcl) {
-	config.addListener(pcl);
-    }
-
-    /**
-     * Removes a property change listener.
-     *
-     * @param pcl The property change listener to remove
-     */
-    public static void removeListener(PropertyChangeListener pcl) {
-	config.removeListener(pcl);
-    }
-
-    /**
-     * Adds a property change listener.Static for simplicity of use.
-     *
-     * @param key The key to listen for changes of
-     * @param pcl The property change listener to add
-     */
-    public static void addListener(ConfigurationKey key,
-                                   PropertyChangeListener pcl) {
-	config.addListener(key, pcl);
-    }
-
-    /**
-     * Removes a property change listener.
-     *
-     * @param key The key to listen for changes of
-     * @param pcl The property change listener to remove
-     */
-    public static void removeListener(ConfigurationKey key,
-                                      PropertyChangeListener pcl) {
-	config.removeListener(key, pcl);
-    }
-
-    /**
-     * @param key The key to remove.
-     */
-    public static void removeKey(ConfigurationKey key) {
-        config.remove(key.getKey());
-    }
-
-    /**
-     * Create a single component configuration key.
-     *
-     * @param k1 key component 1.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1) {
-	return new ConfigurationKeyImpl(k1);
-    }
-
-    /**
-     * Create a sub-component of an existing configuration key.
-     *
-     * @param ck existing key to extend.
-     * @param k1 key component 1.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(ConfigurationKey ck, String k1) {
-	return new ConfigurationKeyImpl(ck, k1);
-    }
-
-    /**
-     * Create a two-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2) {
-	return new ConfigurationKeyImpl(k1, k2);
-    }
-
-    /**
-     * Create a three-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @param k3 key component 3.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2, String k3) {
-	return new ConfigurationKeyImpl(k1, k2, k3);
-    }
-
-    /**
-     * Create a four-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @param k3 key component 3.
-     * @param k4 key component 4.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2,
-					   String k3, String k4) {
-	return new ConfigurationKeyImpl(k1, k2, k3, k4);
-    }
-
-    /**
-     * Create a five-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @param k3 key component 3.
-     * @param k4 key component 4.
-     * @param k5 key component 5.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2,
-					   String k3, String k4,
-					   String k5) {
-	return new ConfigurationKeyImpl(k1, k2, k3, k4, k5);
-    }
-}
+    private static final long serialVersionUID = -89995395353007445L;
+} /* end class SelectionNode */
 ```
-refactored code:
+after refactored:
 ```java
-// Separate class for handling configuration
-class ConfigurationHandler {
-    private Properties properties;
+public class SelectionNode {
+    private static final Logger LOG = Logger.getLogger(SelectionNode.class);
+    private static final Icon dep = ResourceLoaderWrapper.lookupIconResource("Association");
+    private Fig content;
 
-    public ConfigurationHandler() {
-        properties = new Properties();
+    private HandleManager handleManager;
+    private ButtonPainter buttonPainter;
+    private DragHandler dragHandler;
+
+    public SelectionNode(Fig f) {
+        this.content = f;
+        this.handleManager = new HandleManager(content, dep);
+        this.buttonPainter = new ButtonPainter(content, dep);
+        this.dragHandler = new DragHandler(content, dep);
     }
 
-    public boolean loadDefault() {
-        // Implement default loading logic
+    public void hitHandle(Rectangle r, Handle h) {
+        handleManager.hitHandle(r, h);
     }
 
-    public boolean load(File file) {
-        // Implement file loading logic
+    public void paintButtons(Graphics g) {
+        buttonPainter.paintButtons(g);
     }
 
-    public boolean load(URL url) {
-        // Implement URL loading logic
+    public void dragHandle(int mX, int mY, int anX, int anY, Handle hand) {
+        dragHandler.dragHandle(mX, mY, anX, anY, hand);
     }
-
-    public boolean saveDefault(boolean force) {
-        // Implement default saving logic
-    }
-
-    public String getString(ConfigurationKey key, String defaultValue) {
-        // Implement string retrieval logic
-    }
-
-    // ... other methods for getting and setting properties
 }
 
-// Refactored Configuration class
-public final class Configuration {
-    private static ConfigurationHandler configHandler = new ConfigurationHandler();
+class HandleManager {
+    private Fig content;
+    private Icon dep;
 
-    // ... keep the constants as they are
-
-    // Private constructor to prevent instantiation
-    private Configuration() {}
-
-    // Static method to get the configuration handler
-    public static ConfigurationHandler getConfigHandler() {
-        return configHandler;
+    public HandleManager(Fig content, Icon dep) {
+        this.content = content;
+        this.dep = dep;
     }
 
-    // ... other static methods can be removed or refactored to use configHandler
+    public void hitHandle(Rectangle r, Handle h) {
+        // Implementation for hitHandle...
+    	if (h.index != -1) {
+    	    return;
+    	}
+    	if (!isPaintButtons()) {
+    	    return;
+    	}
+    	Editor ce = Globals.curEditor();
+    	SelectionManager sm = ce.getSelectionManager();
+    	if (sm.size() != 1) {
+    	    return;
+    	}
+    	ModeManager mm = ce.getModeManager();
+    	if (mm.includes(ModeModify.class) && getPressedButton() == -1) {
+    	    return;
+    	}
+    	int cx = getContent().getX();
+    	int cy = getContent().getY();
+    	int cw = getContent().getWidth();
+    	int ch = getContent().getHeight();
+    	int aw = dep.getIconWidth();
+    	int ah = dep.getIconHeight();
+    	if (hitAbove(cx + cw / 2, cy, aw, ah, r)) {
+    	    h.index = 10;
+    	    h.instructions = "Add a node";
+    	} else if (hitBelow(cx + cw / 2, cy + ch, aw, ah, r)) {
+    	    h.index = 11;
+    	    h.instructions = "Add a node";
+    	} else if (hitLeft(cx + cw, cy + ch / 2, aw, ah, r)) {
+    	    h.index = 12;
+    	    h.instructions = "Add a node";
+    	} else if (hitRight(cx, cy + ch / 2, aw, ah, r)) {
+    	    h.index = 13;
+    	    h.instructions = "Add a node";
+    	} else {
+    	    h.index = -1;
+    	    h.instructions = "Move object(s)";
+    	}
+    }
 }
 
-// Usage example in client code
-public class Client {
-    public void someMethod() {
-        // Get the configuration handler
-        ConfigurationHandler configHandler = Configuration.getConfigHandler();
+class ButtonPainter {
+    private Fig content;
+    private Icon dep;
 
-        // Load configuration
-        boolean loaded = configHandler.load(new File("config.properties"));
+    public ButtonPainter(Fig content, Icon dep) {
+        this.content = content;
+        this.dep = dep;
+    }
 
-        // Get and set properties through the configuration handler
-        String value = configHandler.getString(someKey, "default");
+    public void paintButtons(Graphics g) {
+        // Implementation for paintButtons...
+    	int cx = getContent().getX();
+    	int cy = getContent().getY();
+    	int cw = getContent().getWidth();
+    	int ch = getContent().getHeight();
+    	paintButtonAbove(dep, g, cx + cw / 2, cy, 10);
+    	paintButtonBelow(dep, g, cx + cw / 2, cy + ch, 11);
+    	paintButtonLeft(dep, g, cx + cw, cy + ch / 2, 12);
+    	paintButtonRight(dep, g, cx, cy + ch / 2, 13);
+    }
+}
+
+class DragHandler {
+    private Fig content;
+    private Icon dep;
+
+    public DragHandler(Fig content, Icon dep) {
+        this.content = content;
+        this.dep = dep;
+    }
+
+    public void dragHandle(int mX, int mY, int anX, int anY, Handle hand) {
+        // Implementation for dragHandle...
+    	if (hand.index < 10) {
+    	    setPaintButtons(false);
+    	    super.dragHandle(mX, mY, anX, anY, hand);
+    	    return;
+    	}
+    	int cx = getContent().getX(), cy = getContent().getY();
+    	int cw = getContent().getWidth(), ch = getContent().getHeight();
+    	Object edgeType = null;
+    	Object nodeType = Model.getMetaTypes().getNode();
+    	int bx = mX, by = mY;
+    	boolean reverse = false;
+    	switch (hand.index) {
+    	case 10: //add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    by = cy;
+    	    bx = cx + cw / 2;
+    	    break;
+    	case 11: //add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    reverse = true;
+    	    by = cy + ch;
+    	    bx = cx + cw / 2;
+    	    break;
+    	case 12: //add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    by = cy + ch / 2;
+    	    bx = cx + cw;
+    	    break;
+    	case 13: // add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    reverse = true;
+    	    by = cy + ch / 2;
+    	    bx = cx;
+    	    break;
+    	default:
+    	    LOG.warn("invalid handle number");
+    	    break;
+    	}
+    	if (edgeType != null && nodeType != null) {
+    	    Editor ce = Globals.curEditor();
+    	    ModeCreateEdgeAndNode m =
+    	        new ModeCreateEdgeAndNode(ce, edgeType, false, this);
+    	    m.setup((FigNode) getContent(), getContent().getOwner(),
+                        bx, by, reverse);
+    	    ce.pushMode(m);
+    	}
     }
 }
 ```
