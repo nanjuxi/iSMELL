@@ -1,474 +1,686 @@
-In computer programming, a code smell is any characteristic in the source code of a program that possibly indicates a deeper problem. I will now tell you the definition about Refused Bequest. Please read the definition and refactor the code according to the target to eliminate this smell.
-The definition of Refused Bequest is: Refused Bequest occurs if a subclass uses only some of the methods and properties inherited from its parents. This is an indication that the class should not be a subclass of that parent class, since child classes should be adding or modifying functionality. 
-
-Here is an example for refactoring code which has Refused Bequest smell, Please read it carefully and learn to show only the most modified critical code after refactoring. You can replace functional code with comments.
+In computer programming, a code smell is any characteristic in the source code of a program that possibly indicates a deeper problem. I will now tell you the definition about {{codesmell}}. Please read the definition and refactor the code according to the target to eliminate this smell.
+The definition of {{codesmell}} is: {{definition}}
+Here is an example for refactoring code which has {{codesmell}} smell, Please read it carefully and learn to show only the most modified critical code after refactoring. You can replace functional code with comments.
 You do not need to keep the structure, improve the code's readability and maintainability
 <example>
-original code:
-```java
-public final class Configuration {
-
-    ////////////////////////////////////////////////////////////////
-    // Instance variables
-
-    /**
-     * Property to indicate configuration load from file.
-     */
-    public static final String FILE_LOADED = "configuration.load.file";
-
-    /**
-     * Property to indicate configuration load from url.
-     */
-    public static final String URL_LOADED = "configuration.load.url";
-
-    /**
-     * Property to indicate configuration save to file.
-     */
-    public static final String FILE_SAVED = "configuration.save.file";
-
-    /**
-     * Property to indicate configuration save to url.
-     */
-    public static final String URL_SAVED = "configuration.save.url";
-
-    /**
-     * The only occurance of the configuration handler.
-     */
-    private static ConfigurationHandler config =
-	getFactory().getConfigurationHandler();
-
-    /**
-     * Private constructor so it cannot be instantiated.
-     */
-    private Configuration() {
-    }
-
-    /**
-     * Returns the instance of the configuration singleton.
-     *
-     * @return the configuration handler
-     */
-    public static ConfigurationHandler getConfigurationHandler() {
-	return config;
-    }
-
-    /**
-     * Returns the configuration factory instance.<p>
-     *
-     * This is equivalent to ConfigurationFactory.getInstance() but
-     * using Configuration.getFactory() is shorter to type and
-     * allows us not to have to deal with ConfigurationFactory at
-     * all if we don't need to modify or configure it.
-     *
-     * @return the configuration factory
-     */
-    public static ConfigurationFactory getFactory() {
-	return ConfigurationFactory.getInstance();
-    }
-
-    /**
-     * Load the configuration from the default location.
-     *
-     * The configuration will be automatically loaded from the default
-     * location the first time a value is queried or modified, if it
-     * had not been previously loaded.  Only the first load request
-     * will be honored, so if the configuration is to be loaded from
-     * a non-default location, load(name) must be used prior to any
-     * other call.  The configuration can be loaded only one time.
-     *
-     * Implementations must ignore load requests once a load is
-     * already successful, and must return false for each of those
-     * ignored requests.
-     *
-     * @return true if the load is successful, otherwise false
-     */
-    public static boolean load() {
-	return config.loadDefault();
-    }
-
-    /**
-     * Load the configuration from a specified file.
-     *
-     * @param file the File to load
-     *
-     * @return true if the load is successful, otherwise false
-     */
-    public static boolean load(File file) {
-	return config.load(file);
-    }
-
-    /**
-     * Load the configuration from a specified url.
-     *
-     * @param url the URL to load
-     *
-     * @return true if the load is successful, otherwise false
-     */
-    public static boolean load(URL url) {
-	return config.load(url);
-    }
-
-    /**
-     * Save the configuration to the default location.
-     *
-     * Implementations do not have to handle this method.
-     * If the method is not allowed or it fails, the implementation
-     * must return false.
-     *
-     * @return true if the save is successful, otherwise false
-     */
-    public static boolean save() {
-	return Configuration.save(false);
-    }
-
-    /**
-     * Save the configuration to the default location.
-     *
-     * Implementations do not have to handle this method.
-     * If the method is not allowed or it fails, the implementation
-     * must return false.
-     *
-     * @param force the file to save even if it would not normally
-     * be saved.
-     *
-     * @return true if the save is successful, otherwise false
-     */
-    public static boolean save(boolean force) {
-	return config.saveDefault(force);
-    }
-
-    /**
-     * Returns the string value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the string value of the parameter if it exists, otherwise
-     * a zero length string
-     */
-    public static String getString(ConfigurationKey key) {
-	return getString(key, "");
-    }
-
-    /**
-     * Returns the string value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue the value to return if the key does not exist
-     *
-     * @return the string value of the parameter if it exists, otherwise the
-     *   default value
-     */
-    public static String getString(ConfigurationKey key,
-                                   String defaultValue) {
-	return config.getString(key, defaultValue);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the string value of the parameter if it exists, otherwise zero
-     */
-    public static int getInteger(ConfigurationKey key) {
-	return getInteger(key, 0);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue if the key is not found
-     *
-     * @return the string value of the parameter if it exists,
-     *         otherwise the default value
-     */
-    public static double getDouble(ConfigurationKey key,
-                                   double defaultValue) {
-	return config.getDouble(key, defaultValue);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the string value of the parameter if it exists, otherwise zero
-     */
-    public static double getDouble(ConfigurationKey key) {
-	return getDouble(key, 0);
-    }
-
-    /**
-     * Returns the numeric value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue the value to return if the key does not exist
-     *
-     * @return the numeric value of the parameter if it exists, otherwise
-     *  the default value
-     */
-    public static int getInteger(ConfigurationKey key, int defaultValue) {
-	return config.getInteger(key, defaultValue);
-    }
-
-    /**
-     * Returns the boolean value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     *
-     * @return the boolean value of the parameter if it exists, otherwise false
-     */
-    public static boolean getBoolean(ConfigurationKey key) {
-	return getBoolean(key, false);
-    }
-
-    /**
-     * Returns the boolean value of a configuration property.
-     *
-     * @param key the key to retrieve the value of
-     * @param defaultValue the value to return if the key does not exist
-     *
-     * @return the boolean value of the parameter if it exists, otherwise
-     *  the default value
-     */
-    public static boolean getBoolean(ConfigurationKey key,
-                                     boolean defaultValue) {
-	return config.getBoolean(key, defaultValue);
-    }
-
-    /**
-     * Sets the string value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setString(ConfigurationKey key, String newValue) {
-	config.setString(key, newValue);
-    }
-
-    /**
-     * Sets the numeric value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setInteger(ConfigurationKey key, int newValue) {
-	config.setInteger(key, newValue);
-    }
-
-    /**
-     * Sets the numeric value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setDouble(ConfigurationKey key, double newValue) {
-	config.setDouble(key, newValue);
-    }
-
-    /**
-     * Sets the boolean value of a configuration property.
-     *
-     * @param key the key to set
-     * @param newValue the value to set the key to.
-     */
-    public static void setBoolean(ConfigurationKey key,
-                                  boolean newValue) {
-	config.setBoolean(key, newValue);
-    }
-
-    /**
-     * Adds a property change listener.
-     *
-     * @param pcl The property change listener to add
-     */
-    public static void addListener(PropertyChangeListener pcl) {
-	config.addListener(pcl);
-    }
-
-    /**
-     * Removes a property change listener.
-     *
-     * @param pcl The property change listener to remove
-     */
-    public static void removeListener(PropertyChangeListener pcl) {
-	config.removeListener(pcl);
-    }
-
-    /**
-     * Adds a property change listener.Static for simplicity of use.
-     *
-     * @param key The key to listen for changes of
-     * @param pcl The property change listener to add
-     */
-    public static void addListener(ConfigurationKey key,
-                                   PropertyChangeListener pcl) {
-	config.addListener(key, pcl);
-    }
-
-    /**
-     * Removes a property change listener.
-     *
-     * @param key The key to listen for changes of
-     * @param pcl The property change listener to remove
-     */
-    public static void removeListener(ConfigurationKey key,
-                                      PropertyChangeListener pcl) {
-	config.removeListener(key, pcl);
-    }
-
-    /**
-     * @param key The key to remove.
-     */
-    public static void removeKey(ConfigurationKey key) {
-        config.remove(key.getKey());
-    }
-
-    /**
-     * Create a single component configuration key.
-     *
-     * @param k1 key component 1.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1) {
-	return new ConfigurationKeyImpl(k1);
-    }
-
-    /**
-     * Create a sub-component of an existing configuration key.
-     *
-     * @param ck existing key to extend.
-     * @param k1 key component 1.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(ConfigurationKey ck, String k1) {
-	return new ConfigurationKeyImpl(ck, k1);
-    }
-
-    /**
-     * Create a two-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2) {
-	return new ConfigurationKeyImpl(k1, k2);
-    }
-
-    /**
-     * Create a three-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @param k3 key component 3.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2, String k3) {
-	return new ConfigurationKeyImpl(k1, k2, k3);
-    }
-
-    /**
-     * Create a four-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @param k3 key component 3.
-     * @param k4 key component 4.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2,
-					   String k3, String k4) {
-	return new ConfigurationKeyImpl(k1, k2, k3, k4);
-    }
-
-    /**
-     * Create a five-component configuration key.
-     *
-     * @param k1 key component 1.
-     * @param k2 key component 2.
-     * @param k3 key component 3.
-     * @param k4 key component 4.
-     * @param k5 key component 5.
-     * @return the new {@link ConfigurationKey}.
-     */
-    public static ConfigurationKey makeKey(String k1, String k2,
-					   String k3, String k4,
-					   String k5) {
-	return new ConfigurationKeyImpl(k1, k2, k3, k4, k5);
-    }
-}
-```
-refactored code:
-```java
-// Separate class for handling configuration
-class ConfigurationHandler {
-    private Properties properties;
-
-    public ConfigurationHandler() {
-        properties = new Properties();
-    }
-
-    public boolean loadDefault() {
-        // Implement default loading logic
-    }
-
-    public boolean load(File file) {
-        // Implement file loading logic
-    }
-
-    public boolean load(URL url) {
-        // Implement URL loading logic
-    }
-
-    public boolean saveDefault(boolean force) {
-        // Implement default saving logic
-    }
-
-    public String getString(ConfigurationKey key, String defaultValue) {
-        // Implement string retrieval logic
-    }
-
-    // ... other methods for getting and setting properties
-}
-
-// Refactored Configuration class
-public final class Configuration {
-    private static ConfigurationHandler configHandler = new ConfigurationHandler();
-
-    // ... keep the constants as they are
-
-    // Private constructor to prevent instantiation
-    private Configuration() {}
-
-    // Static method to get the configuration handler
-    public static ConfigurationHandler getConfigHandler() {
-        return configHandler;
-    }
-
-    // ... other static methods can be removed or refactored to use configHandler
-}
-
-// Usage example in client code
-public class Client {
-    public void someMethod() {
-        // Get the configuration handler
-        ConfigurationHandler configHandler = Configuration.getConfigHandler();
-
-        // Load configuration
-        boolean loaded = configHandler.load(new File("config.properties"));
-
-        // Get and set properties through the configuration handler
-        String value = configHandler.getString(someKey, "default");
-    }
-}
-```
 
 </example>
 
-Now I will give you a piece of code that needs refactoring and the superclass of that code. Please based on the example, refactor the following code that needs refactoring. You don't need to give the full code, just give the most modified part of it. You should not output extra content.
-This is the superclass of the code that needs refactoring:
-{{input_superclass_code}}
-This is the code that needs refactoring:
-{{input_class_code}}
+Now based on the example, refactor the following code. You don't need to give the full code, just give the most modified part of it. You should not output extra content.
+```java
+{{input}}
+```
+
+
+codesmell:
+God Class / Feature Envy / Refused Bequest
+
+definition:
+God Class is a large and unwieldy class that takes on too many responsibilities within an application. It concentrates a multitude of functions, oversees numerous objects, and effectively tries to do everything. 
+Feature Envy occurs when a method in one class can't seem to keep its eyes off the data of another class. This sneaky behavior hints that there might be a better home for the method, where it fits in more naturally and keeps the codebase cleaner and easier to manage.
+Refused Bequest occurs if a subclass uses only some of the methods and properties inherited from its parents. This is an indication that the class should not be a subclass of that parent class, since child classes should be adding or modifying functionality.
+
+god class example:
+<example>
+refactored code:
+```java
+// New class to handle scanning of start tags
+class StartTagScanner {
+    private XMLEntityHandler.EntityReader entityReader;
+    private XMLErrorReporter errorReporter;
+    private StringPool stringPool;
+    private EventHandler eventHandler;
+
+    public StartTagScanner(XMLEntityHandler.EntityReader entityReader, XMLErrorReporter errorReporter, StringPool stringPool, EventHandler eventHandler) {
+        this.entityReader = entityReader;
+        this.errorReporter = errorReporter;
+        this.stringPool = stringPool;
+        this.eventHandler = eventHandler;
+    }
+
+    public void scanStartTag(QName element) throws Exception {
+        // Implementation of scanning a start tag, calling eventHandler methods
+    }
+}
+
+// New class to handle scanning of end tags
+class EndTagScanner {
+    private XMLEntityHandler.EntityReader entityReader;
+    private XMLErrorReporter errorReporter;
+    private StringPool stringPool;
+    private EventHandler eventHandler;
+
+    public EndTagScanner(XMLEntityHandler.EntityReader entityReader, XMLErrorReporter errorReporter, StringPool stringPool, EventHandler eventHandler) {
+        this.entityReader = entityReader;
+        this.errorReporter = errorReporter;
+        this.stringPool = stringPool;
+        this.eventHandler = eventHandler;
+    }
+
+    public void scanEndTag(QName element) throws Exception {
+        // Implementation of scanning an end tag, calling eventHandler methods
+    }
+}
+
+// New class to handle scanning of attributes
+class AttributeScanner {
+    private XMLEntityHandler.EntityReader entityReader;
+    private XMLErrorReporter errorReporter;
+    private StringPool stringPool;
+    private EventHandler eventHandler;
+
+    public AttributeScanner(XMLEntityHandler.EntityReader entityReader, XMLErrorReporter errorReporter, StringPool stringPool, EventHandler eventHandler) {
+        this.entityReader = entityReader;
+        this.errorReporter = errorReporter;
+        this.stringPool = stringPool;
+        this.eventHandler = eventHandler;
+    }
+
+    public boolean scanAttributes(QName element, QName attribute) throws Exception {
+        // Implementation of scanning attributes, calling eventHandler methods
+        // Returns true if attributes are successfully scanned, false otherwise
+    }
+}
+
+// The XMLDocumentScanner class now delegates responsibility to the new classes
+public final class XMLDocumentScanner {
+    // ... (Other existing code and member variables remain unchanged)
+
+    // Use the new classes within the XMLDocumentScanner methods
+    private StartTagScanner startTagScanner;
+    private EndTagScanner endTagScanner;
+    private AttributeScanner attributeScanner;
+
+    public XMLDocumentScanner(StringPool stringPool, XMLErrorReporter errorReporter, XMLEntityHandler entityHandler, XMLEntityHandler.CharBuffer literalData) {
+        // ... (Other existing constructor code remains unchanged)
+        this.startTagScanner = new StartTagScanner(entityReader, errorReporter, stringPool, fEventHandler);
+        this.endTagScanner = new EndTagScanner(entityReader, errorReporter, stringPool, fEventHandler);
+        this.attributeScanner = new AttributeScanner(entityReader, errorReporter, stringPool, fEventHandler);
+    }
+
+    // Example method usage after refactoring
+    boolean scanElement(QName element) throws Exception {
+        // Scan for attributes
+        boolean hasAttributes = attributeScanner.scanAttributes(element, fAttributeQName);
+        if (!hasAttributes) {
+            // Handle error
+        }
+
+        // Scan for start tag
+        startTagScanner.scanStartTag(element);
+
+        // Scan for end tag
+        endTagScanner.scanEndTag(element);
+
+        // ... (Rest of the method implementation remains unchanged)
+    }
+
+    // ... (Other methods remain unchanged, but may also delegate to the new classes)
+}
+```
+</example>
+
+
+feature envy example:
+<example>
+original code:
+void processRegionsInTransition(final RegionTransitionData data,
+      final HRegionInfo regionInfo,
+      final Map<ServerName, List<Pair<HRegionInfo, Result>>> deadServers,
+      int expectedVersion)
+  throws KeeperException {
+    String encodedRegionName = regionInfo.getEncodedName();
+    LOG.info("Processing region " + regionInfo.getRegionNameAsString() +
+      " in state " + data.getEventType());
+    List<HRegionInfo> hris = this.enablingTables.get(regionInfo.getTableNameAsString());
+    if (hris != null && !hris.isEmpty()) {
+      hris.remove(regionInfo);
+    }
+    synchronized (regionsInTransition) {
+      RegionState regionState = regionsInTransition.get(encodedRegionName);
+      if (regionState != null ||
+          failoverProcessedRegions.containsKey(encodedRegionName)) {
+        // Just return
+        return;
+      }
+      switch (data.getEventType()) {
+      case M_ZK_REGION_CLOSING:
+        // If zk node of the region was updated by a live server skip this
+        // region and just add it into RIT.
+        if (isOnDeadServer(regionInfo, deadServers) &&
+            (data.getOrigin() == null || !serverManager.isServerOnline(data.getOrigin()))) {
+          // If was on dead server, its closed now. Force to OFFLINE and this
+          // will get it reassigned if appropriate
+          forceOffline(regionInfo, data);
+        } else {
+          // Just insert region into RIT.
+          // If this never updates the timeout will trigger new assignment
+          regionsInTransition.put(encodedRegionName, new RegionState(
+            regionInfo, RegionState.State.CLOSING,
+            data.getStamp(), data.getOrigin()));
+        }
+        failoverProcessedRegions.put(encodedRegionName, regionInfo);
+        break;
+
+      case RS_ZK_REGION_CLOSED:
+      case RS_ZK_REGION_FAILED_OPEN:
+        // Region is closed, insert into RIT and handle it
+        addToRITandCallClose(regionInfo, RegionState.State.CLOSED, data);
+        failoverProcessedRegions.put(encodedRegionName, regionInfo);
+        break;
+
+      case M_ZK_REGION_OFFLINE:
+        // If zk node of the region was updated by a live server skip this
+        // region and just add it into RIT.
+        if (isOnDeadServer(regionInfo, deadServers) &&
+            (data.getOrigin() == null ||
+              !serverManager.isServerOnline(data.getOrigin()))) {
+          // Region is offline, insert into RIT and handle it like a closed
+          addToRITandCallClose(regionInfo, RegionState.State.OFFLINE, data);
+        } else if (data.getOrigin() != null &&
+            !serverManager.isServerOnline(data.getOrigin())) {
+          // to handle cases where offline node is created but sendRegionOpen
+          // RPC is not yet sent
+          addToRITandCallClose(regionInfo, RegionState.State.OFFLINE, data);
+        } else {
+          regionsInTransition.put(encodedRegionName, new RegionState(
+              regionInfo, RegionState.State.PENDING_OPEN, data.getStamp(), data
+                  .getOrigin()));
+        }
+        failoverProcessedRegions.put(encodedRegionName, regionInfo);
+        break;
+
+      case RS_ZK_REGION_OPENING:
+        // TODO: Could check if it was on deadServers.  If it was, then we could
+        // do what happens in TimeoutMonitor when it sees this condition.
+
+        // Just insert region into RIT
+        // If this never updates the timeout will trigger new assignment
+        if (regionInfo.isMetaTable()) {
+          regionsInTransition.put(encodedRegionName, new RegionState(
+              regionInfo, RegionState.State.OPENING, data.getStamp(), data
+                  .getOrigin()));
+          // If ROOT or .META. table is waiting for timeout monitor to assign
+          // it may take lot of time when the assignment.timeout.period is
+          // the default value which may be very long.  We will not be able
+          // to serve any request during this time.
+          // So we will assign the ROOT and .META. region immediately.
+          processOpeningState(regionInfo);
+          break;
+        }
+        regionsInTransition.put(encodedRegionName, new RegionState(regionInfo,
+            RegionState.State.OPENING, data.getStamp(), data.getOrigin()));
+        failoverProcessedRegions.put(encodedRegionName, regionInfo);
+        break;
+
+      case RS_ZK_REGION_OPENED:
+        // Region is opened, insert into RIT and handle it
+        regionsInTransition.put(encodedRegionName, new RegionState(
+            regionInfo, RegionState.State.OPEN,
+            data.getStamp(), data.getOrigin()));
+        ServerName sn = data.getOrigin() == null? null: data.getOrigin();
+        // sn could be null if this server is no longer online.  If
+        // that is the case, just let this RIT timeout; it'll be assigned
+        // to new server then.
+        if (sn == null) {
+          LOG.warn("Region in transition " + regionInfo.getEncodedName() +
+            " references a null server; letting RIT timeout so will be " +
+            "assigned elsewhere");
+        } else if (!serverManager.isServerOnline(sn)
+            && (isOnDeadServer(regionInfo, deadServers)
+                || regionInfo.isMetaRegion() || regionInfo.isRootRegion())) {
+          forceOffline(regionInfo, data);
+        } else {
+          new OpenedRegionHandler(master, this, regionInfo, sn, expectedVersion)
+              .process();
+        }
+        failoverProcessedRegions.put(encodedRegionName, regionInfo);
+        break;
+      }
+    }
+  }
+refactored code: 
+
+```java
+public class RegionStateManager {
+    private Map<String, RegionState> regionsInTransition;
+    private Map<ServerName, List<Pair<HRegionInfo, Result>>> deadServers;
+    private ServerManager serverManager;
+
+    public RegionStateManager(Map<String, RegionState> regionsInTransition, 
+                              Map<ServerName, List<Pair<HRegionInfo, Result>>> deadServers,
+                              ServerManager serverManager) {
+        this.regionsInTransition = regionsInTransition;
+        this.deadServers = deadServers;
+        this.serverManager = serverManager;
+    }
+
+    public void processRegionState(HRegionInfo regionInfo, RegionTransitionData data, int expectedVersion) {
+        String encodedRegionName = regionInfo.getEncodedName();
+        RegionState regionState = regionsInTransition.get(encodedRegionName);
+
+        if (regionState != null || failoverProcessedRegions.containsKey(encodedRegionName)) {
+            return;
+        }
+
+        switch (data.getEventType()) {
+            case M_ZK_REGION_CLOSING:
+                handleRegionClosing(regionInfo, data);
+                break;
+            case RS_ZK_REGION_CLOSED:
+            case RS_ZK_REGION_FAILED_OPEN:
+                handleRegionClosed(regionInfo, data);
+                break;
+            case M_ZK_REGION_OFFLINE:
+                handleRegionOffline(regionInfo, data);
+                break;
+            case RS_ZK_REGION_OPENING:
+                handleRegionOpening(regionInfo, data);
+                break;
+            case RS_ZK_REGION_OPENED:
+                handleRegionOpened(regionInfo, data, expectedVersion);
+                break;
+        }
+    }
+
+    private void handleRegionClosing(HRegionInfo regionInfo, RegionTransitionData data) {
+        if (isOnDeadServer(regionInfo) && (data.getOrigin() == null || !serverManager.isServerOnline(data.getOrigin()))) {
+            forceOffline(regionInfo, data);
+        } else {
+            regionsInTransition.put(regionInfo.getEncodedName(), new RegionState(
+                regionInfo, RegionState.State.CLOSING, data.getStamp(), data.getOrigin()));
+        }
+        failoverProcessedRegions.put(regionInfo.getEncodedName(), regionInfo);
+    }
+
+    // Additional methods to handle other cases (handleRegionClosed, handleRegionOffline, etc.)
+
+    private boolean isOnDeadServer(HRegionInfo regionInfo) {
+        // Check if region is on a dead server
+    }
+
+    private void forceOffline(HRegionInfo regionInfo, RegionTransitionData data) {
+        // Force region offline
+    }
+}
+```
+
+### Usage in the main class:
+
+```java
+public void processRegionsInTransition(final RegionTransitionData data,
+      final HRegionInfo regionInfo,
+      final Map<ServerName, List<Pair<HRegionInfo, Result>>> deadServers,
+      int expectedVersion) throws KeeperException {
+    LOG.info("Processing region " + regionInfo.getRegionNameAsString() +
+      " in state " + data.getEventType());
+    List<HRegionInfo> hris = this.enablingTables.get(regionInfo.getTableNameAsString());
+    if (hris != null && !hris.isEmpty()) {
+      hris.remove(regionInfo);
+    }
+    RegionStateManager manager = new RegionStateManager(regionsInTransition, deadServers, serverManager);
+    manager.processRegionState(regionInfo, data, expectedVersion);
+}
+```
+</example>
+
+
+refused bequest:
+<example>
+original code:
+```java
+public class SelectionNode extends SelectionNodeClarifiers {
+    /**
+     * Logger.
+     */
+    private static final Logger LOG =
+        Logger.getLogger(SelectionNode.class);
+    ////////////////////////////////////////////////////////////////
+    // constants
+    private static Icon dep =
+	ResourceLoaderWrapper.lookupIconResource("Association");
+
+
+
+    ////////////////////////////////////////////////////////////////
+    // constructors
+
+    /**
+     * Construct a new SelectionNode for the given Fig.
+     *
+     * @param f The given Fig.
+     */
+    public SelectionNode(Fig f) { super(f); }
+
+    /**
+     * @see org.tigris.gef.base.Selection#hitHandle(java.awt.Rectangle,
+     * org.tigris.gef.presentation.Handle)
+     */
+    public void hitHandle(Rectangle r, Handle h) {
+	super.hitHandle(r, h);
+	if (h.index != -1) {
+	    return;
+	}
+	if (!isPaintButtons()) {
+	    return;
+	}
+	Editor ce = Globals.curEditor();
+	SelectionManager sm = ce.getSelectionManager();
+	if (sm.size() != 1) {
+	    return;
+	}
+	ModeManager mm = ce.getModeManager();
+	if (mm.includes(ModeModify.class) && getPressedButton() == -1) {
+	    return;
+	}
+	int cx = getContent().getX();
+	int cy = getContent().getY();
+	int cw = getContent().getWidth();
+	int ch = getContent().getHeight();
+	int aw = dep.getIconWidth();
+	int ah = dep.getIconHeight();
+	if (hitAbove(cx + cw / 2, cy, aw, ah, r)) {
+	    h.index = 10;
+	    h.instructions = "Add a node";
+	} else if (hitBelow(cx + cw / 2, cy + ch, aw, ah, r)) {
+	    h.index = 11;
+	    h.instructions = "Add a node";
+	} else if (hitLeft(cx + cw, cy + ch / 2, aw, ah, r)) {
+	    h.index = 12;
+	    h.instructions = "Add a node";
+	} else if (hitRight(cx, cy + ch / 2, aw, ah, r)) {
+	    h.index = 13;
+	    h.instructions = "Add a node";
+	} else {
+	    h.index = -1;
+	    h.instructions = "Move object(s)";
+	}
+    }
+
+
+    /**
+     * @see org.tigris.gef.base.SelectionButtons#paintButtons(Graphics)
+     */
+    public void paintButtons(Graphics g) {
+	int cx = getContent().getX();
+	int cy = getContent().getY();
+	int cw = getContent().getWidth();
+	int ch = getContent().getHeight();
+	paintButtonAbove(dep, g, cx + cw / 2, cy, 10);
+	paintButtonBelow(dep, g, cx + cw / 2, cy + ch, 11);
+	paintButtonLeft(dep, g, cx + cw, cy + ch / 2, 12);
+	paintButtonRight(dep, g, cx, cy + ch / 2, 13);
+    }
+
+
+    /**
+     * @see org.tigris.gef.base.Selection#dragHandle(int, int, int, int,
+     * org.tigris.gef.presentation.Handle)
+     */
+    public void dragHandle(int mX, int mY, int anX, int anY, Handle hand) {
+	if (hand.index < 10) {
+	    setPaintButtons(false);
+	    super.dragHandle(mX, mY, anX, anY, hand);
+	    return;
+	}
+	int cx = getContent().getX(), cy = getContent().getY();
+	int cw = getContent().getWidth(), ch = getContent().getHeight();
+	Object edgeType = null;
+	Object nodeType = Model.getMetaTypes().getNode();
+	int bx = mX, by = mY;
+	boolean reverse = false;
+	switch (hand.index) {
+	case 10: //add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    by = cy;
+	    bx = cx + cw / 2;
+	    break;
+	case 11: //add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    reverse = true;
+	    by = cy + ch;
+	    bx = cx + cw / 2;
+	    break;
+	case 12: //add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    by = cy + ch / 2;
+	    bx = cx + cw;
+	    break;
+	case 13: // add dep
+	    edgeType = Model.getMetaTypes().getAssociation();
+	    reverse = true;
+	    by = cy + ch / 2;
+	    bx = cx;
+	    break;
+	default:
+	    LOG.warn("invalid handle number");
+	    break;
+	}
+	if (edgeType != null && nodeType != null) {
+	    Editor ce = Globals.curEditor();
+	    ModeCreateEdgeAndNode m =
+	        new ModeCreateEdgeAndNode(ce, edgeType, false, this);
+	    m.setup((FigNode) getContent(), getContent().getOwner(),
+                    bx, by, reverse);
+	    ce.pushMode(m);
+	}
+
+    }
+
+
+
+
+    /**
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeAbove(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
+     */
+    protected Object createEdgeAbove(MutableGraphModel gm, Object newNode) {
+        return gm.connect(getContent().getOwner(), newNode,
+			  (Class) Model.getMetaTypes().getAssociation());
+    }
+
+    /**
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeLeft(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
+     */
+    protected Object createEdgeLeft(MutableGraphModel gm, Object newNode) {
+        return gm.connect(newNode, getContent().getOwner(),
+			  (Class) Model.getMetaTypes().getAssociation());
+    }
+
+    /**
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeRight(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
+     */
+    protected Object createEdgeRight(MutableGraphModel gm, Object newNode) {
+        return gm.connect(getContent().getOwner(), newNode,
+			  (Class) Model.getMetaTypes().getAssociation());
+    }
+
+    /**
+     * @see org.tigris.gef.base.SelectionButtons#createEdgeUnder(
+     *         org.tigris.gef.graph.MutableGraphModel, java.lang.Object)
+     */
+    protected Object createEdgeUnder(MutableGraphModel gm, Object newNode) {
+        return gm.connect(newNode, getContent().getOwner(),
+			  (Class) Model.getMetaTypes().getAssociation());
+    }
+
+    /**
+     * @see org.tigris.gef.base.SelectionButtons#getNewNode(int)
+     */
+    protected Object getNewNode(int buttonCode) {
+        return Model.getCoreFactory().createNode();
+    }
+
+    /**
+     * The UID.
+     */
+    private static final long serialVersionUID = -89995395353007445L;
+} /* end class SelectionNode */
+```
+after refactored:
+```java
+public class SelectionNode {
+    private static final Logger LOG = Logger.getLogger(SelectionNode.class);
+    private static final Icon dep = ResourceLoaderWrapper.lookupIconResource("Association");
+    private Fig content;
+
+    private HandleManager handleManager;
+    private ButtonPainter buttonPainter;
+    private DragHandler dragHandler;
+
+    public SelectionNode(Fig f) {
+        this.content = f;
+        this.handleManager = new HandleManager(content, dep);
+        this.buttonPainter = new ButtonPainter(content, dep);
+        this.dragHandler = new DragHandler(content, dep);
+    }
+
+    public void hitHandle(Rectangle r, Handle h) {
+        handleManager.hitHandle(r, h);
+    }
+
+    public void paintButtons(Graphics g) {
+        buttonPainter.paintButtons(g);
+    }
+
+    public void dragHandle(int mX, int mY, int anX, int anY, Handle hand) {
+        dragHandler.dragHandle(mX, mY, anX, anY, hand);
+    }
+}
+
+class HandleManager {
+    private Fig content;
+    private Icon dep;
+
+    public HandleManager(Fig content, Icon dep) {
+        this.content = content;
+        this.dep = dep;
+    }
+
+    public void hitHandle(Rectangle r, Handle h) {
+        // Implementation for hitHandle...
+    	if (h.index != -1) {
+    	    return;
+    	}
+    	if (!isPaintButtons()) {
+    	    return;
+    	}
+    	Editor ce = Globals.curEditor();
+    	SelectionManager sm = ce.getSelectionManager();
+    	if (sm.size() != 1) {
+    	    return;
+    	}
+    	ModeManager mm = ce.getModeManager();
+    	if (mm.includes(ModeModify.class) && getPressedButton() == -1) {
+    	    return;
+    	}
+    	int cx = getContent().getX();
+    	int cy = getContent().getY();
+    	int cw = getContent().getWidth();
+    	int ch = getContent().getHeight();
+    	int aw = dep.getIconWidth();
+    	int ah = dep.getIconHeight();
+    	if (hitAbove(cx + cw / 2, cy, aw, ah, r)) {
+    	    h.index = 10;
+    	    h.instructions = "Add a node";
+    	} else if (hitBelow(cx + cw / 2, cy + ch, aw, ah, r)) {
+    	    h.index = 11;
+    	    h.instructions = "Add a node";
+    	} else if (hitLeft(cx + cw, cy + ch / 2, aw, ah, r)) {
+    	    h.index = 12;
+    	    h.instructions = "Add a node";
+    	} else if (hitRight(cx, cy + ch / 2, aw, ah, r)) {
+    	    h.index = 13;
+    	    h.instructions = "Add a node";
+    	} else {
+    	    h.index = -1;
+    	    h.instructions = "Move object(s)";
+    	}
+    }
+}
+
+class ButtonPainter {
+    private Fig content;
+    private Icon dep;
+
+    public ButtonPainter(Fig content, Icon dep) {
+        this.content = content;
+        this.dep = dep;
+    }
+
+    public void paintButtons(Graphics g) {
+        // Implementation for paintButtons...
+    	int cx = getContent().getX();
+    	int cy = getContent().getY();
+    	int cw = getContent().getWidth();
+    	int ch = getContent().getHeight();
+    	paintButtonAbove(dep, g, cx + cw / 2, cy, 10);
+    	paintButtonBelow(dep, g, cx + cw / 2, cy + ch, 11);
+    	paintButtonLeft(dep, g, cx + cw, cy + ch / 2, 12);
+    	paintButtonRight(dep, g, cx, cy + ch / 2, 13);
+    }
+}
+
+class DragHandler {
+    private Fig content;
+    private Icon dep;
+
+    public DragHandler(Fig content, Icon dep) {
+        this.content = content;
+        this.dep = dep;
+    }
+
+    public void dragHandle(int mX, int mY, int anX, int anY, Handle hand) {
+        // Implementation for dragHandle...
+    	if (hand.index < 10) {
+    	    setPaintButtons(false);
+    	    super.dragHandle(mX, mY, anX, anY, hand);
+    	    return;
+    	}
+    	int cx = getContent().getX(), cy = getContent().getY();
+    	int cw = getContent().getWidth(), ch = getContent().getHeight();
+    	Object edgeType = null;
+    	Object nodeType = Model.getMetaTypes().getNode();
+    	int bx = mX, by = mY;
+    	boolean reverse = false;
+    	switch (hand.index) {
+    	case 10: //add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    by = cy;
+    	    bx = cx + cw / 2;
+    	    break;
+    	case 11: //add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    reverse = true;
+    	    by = cy + ch;
+    	    bx = cx + cw / 2;
+    	    break;
+    	case 12: //add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    by = cy + ch / 2;
+    	    bx = cx + cw;
+    	    break;
+    	case 13: // add dep
+    	    edgeType = Model.getMetaTypes().getAssociation();
+    	    reverse = true;
+    	    by = cy + ch / 2;
+    	    bx = cx;
+    	    break;
+    	default:
+    	    LOG.warn("invalid handle number");
+    	    break;
+    	}
+    	if (edgeType != null && nodeType != null) {
+    	    Editor ce = Globals.curEditor();
+    	    ModeCreateEdgeAndNode m =
+    	        new ModeCreateEdgeAndNode(ce, edgeType, false, this);
+    	    m.setup((FigNode) getContent(), getContent().getOwner(),
+                        bx, by, reverse);
+    	    ce.pushMode(m);
+    	}
+    }
+}
+```
+</example>
