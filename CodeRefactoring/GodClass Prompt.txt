@@ -1,6 +1,6 @@
 In computer programming, a code smell is any characteristic in the source code of a program that possibly indicates a deeper problem. I will now tell you the definition about God Class. Please read the definition and refactor the code according to the target to eliminate this smell.
-The definition of God Class is: {{God Class is a large and unwieldy class that takes on too many responsibilities within an application. It concentrates a multitude of functions, oversees numerous objects, and effectively tries to do everything. }}
-Here is an example for refactoring code which has {{God Class}} smell, Please read it carefully and learn to show only the most modified critical code after refactoring. You can replace functional code with comments.
+The definition of God Class is: God Class is a large and unwieldy class that takes on too many responsibilities within an application. It concentrates a multitude of functions, oversees numerous objects, and effectively tries to do everything. 
+Here is an example for refactoring code which has God Class smell, Please read it carefully and learn to show only the most modified critical code after refactoring. You can replace functional code with comments.
 You do not need to keep the structure, improve the code's readability and maintainability
 <example>
 refactored code:
