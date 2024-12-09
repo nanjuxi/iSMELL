@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from moe.attention import MultiHeadSelfAttention
+from attention import MultiHeadSelfAttention
 
 class Expert(nn.Module):
     def __init__(self, input_dim, num_heads=4, head_size=16):

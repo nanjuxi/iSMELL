@@ -2,8 +2,8 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from moe.core import MoE
-from moe.newmodel import ExcelDataset
+from core import MoE
+from newmodel import ExcelDataset
 
 
 def load_model(model_path, input_dim, num_experts, top_k, top_k_per_column):

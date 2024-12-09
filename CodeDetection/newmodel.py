@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from torch.utils.tensorboard import SummaryWriter
 
-from moe.core import custom_loss, MoE, generate_ground_truth
+from core import custom_loss, MoE, generate_ground_truth
 
 
 class ExcelDataset(Dataset):
@@ -28,7 +28,7 @@ class ExcelDataset(Dataset):
         # Identify columns related to expert features
         expert_feat_cols = self.df.columns[7:14]
         # Apply the 'process' method to each element within the expert feature columns
-        self.df[expert_feat_cols] = self.df[expert_feat_cols].map(self.process)
+        self.df[expert_feat_cols] = self.df[expert_feat_cols].applymap(self.process)
 
         # Extract expert features and labels
         expert_feat = self.df.iloc[:, 7:14].values
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     torch.cuda.manual_seed_all(seed_value)  # If using GPU, set the random seed for all GPUs
 
     print("Testing ExcelDataset")
-    excel_dataset = ExcelDataset("../updated_dataset.xlsx", sheet_name="Sheet1")
+    excel_dataset = ExcelDataset("./updated_dataset.xlsx", sheet_name="Sheet1")
 
     # Split dataset into training and validation sets
     train_dataset, val_dataset = train_test_split(excel_dataset, test_size=0.1, random_state=42)
@@ -251,7 +251,7 @@ if __name__ == '__main__':
             if metrics['val_loss_avg'] < best_exact_one_off:
                 best_exact_one_off = metrics['val_loss_avg']
                 print(metrics)
-                torch.save(model.state_dict(), f"../model/best_model_{epoch + 1}.pth")  # Save the model
+                torch.save(model.state_dict(), f"./model/best_model_{epoch + 1}.pth")  # Save the model
                 print(f"Model saved at epoch {epoch + 1}")
 
     print("Training Finished.")
