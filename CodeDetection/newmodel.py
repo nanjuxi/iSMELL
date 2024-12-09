@@ -216,7 +216,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.00003)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=3)
 
-    num_epochs = 10000
+    num_epochs = 100 #change from 10000 to 100
     model.to(device)
 
     for epoch in range(num_epochs):
